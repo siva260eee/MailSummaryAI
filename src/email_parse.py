@@ -26,6 +26,14 @@ def _html_to_text(html: str) -> str:
     
     soup = BeautifulSoup(html, "lxml")
     
+    # Convert links to text with URLs preserved
+    for a_tag in soup.find_all('a', href=True):
+        href = a_tag.get('href', '')
+        text = a_tag.get_text(strip=True)
+        # Replace the link with text and URL
+        if href and href.startswith(('http://', 'https://')):
+            a_tag.replace_with(f"{text} [{href}]")
+    
     # Remove script, style, and other non-content tags
     for tag in soup(["script", "style", "noscript", "head", "meta", "link"]):
         tag.decompose()

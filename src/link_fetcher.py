@@ -74,7 +74,12 @@ def enrich_email_with_links(parsed: Dict[str, str], max_links: int = 10, max_cha
     subject = parsed.get('subject', 'Unknown')[:60]
     links = extract_links(body)
     
+    # Encode subject safely for console output
+    safe_subject = subject.encode('ascii', errors='ignore').decode('ascii')
+    print(f"  Checking links in '{safe_subject}' - Body length: {len(body)}")
+    
     if not links:
+        print(f"  No HTTP links found in this email")
         return parsed
     
     total_links = len(links)
