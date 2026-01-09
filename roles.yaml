@@ -1,0 +1,81 @@
+roles:
+  CEO:
+    enabled: true
+    objectives:
+      - Identify market shifts and competitive moves.
+      - Spot new monetization or distribution opportunities.
+      - Highlight risks that change business strategy.
+    focus_categories:
+      - Business/Marketing
+      - AI/ML
+      - FinTech
+    focus_topics:
+      - pricing
+      - funding
+      - partnerships
+    additional_sources: []
+  CTO:
+    enabled: true
+    objectives:
+      - Track architecture or platform shifts that affect product delivery.
+      - Identify tooling or infra changes that reduce cost or risk.
+      - Surface technical trends that impact hiring or skills.
+    focus_categories:
+      - Development/Engineering
+      - DevOps
+      - AI/ML
+    focus_topics:
+      - platform
+      - infrastructure
+      - reliability
+      - AI
+      - ML
+      - agents
+      - automation
+      - performance
+      - scalability
+    additional_sources: []
+  Developer:
+    enabled: true
+    objectives:
+      - Find practical tooling or libraries to adopt.
+      - Stay current on frameworks and developer workflows.
+      - Spot productivity wins for engineering teams.
+    focus_categories:
+      - Development/Engineering
+      - DevOps
+      - AI/ML
+    focus_topics:
+      - framework
+      - api
+      - sdk
+    additional_sources: []
+  Tester:
+    enabled: true
+    objectives:
+      - Track QA, testing automation, and tooling updates.
+      - Identify techniques to improve coverage and confidence.
+      - Surface risks related to reliability or regressions.
+    focus_categories:
+      - Development/Engineering
+      - DevOps
+    focus_topics:
+      - testing
+      - qa
+      - automation
+    additional_sources: []
+  Investor:
+    enabled: true
+    objectives:
+      - Identify market signals and business performance indicators.
+      - Spot winners/losers and capital trends.
+      - Capture competitive differentiation and moats.
+    focus_categories:
+      - Business/Marketing
+      - FinTech
+      - AI/ML
+    focus_topics:
+      - funding
+      - metrics
+      - growth
+    additional_sources: []

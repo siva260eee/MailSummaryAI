@@ -123,9 +123,13 @@ def parse_email(raw: bytes, max_body_chars: int = 4000) -> Optional[Dict[str, st
             "from": msg.get("From", ""),
             "date": msg.get("Date", ""),
             "body": "[No body content extracted]",
+            "full_body": "[No body content extracted]",
             "list_unsubscribe": msg.get("List-Unsubscribe", ""),
         }
 
+    # Store full body for link extraction (before truncation)
+    full_body = body
+    
     if len(body) > max_body_chars:
         body = body[: max_body_chars - 3] + "..."
 
@@ -134,6 +138,7 @@ def parse_email(raw: bytes, max_body_chars: int = 4000) -> Optional[Dict[str, st
         "from": msg.get("From", ""),
         "date": msg.get("Date", ""),
         "body": body,
+        "full_body": full_body,  # Keep full body for link extraction
         "list_unsubscribe": msg.get("List-Unsubscribe", ""),
     }
 

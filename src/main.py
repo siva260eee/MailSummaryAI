@@ -1,72 +1,34 @@
-import os
 from datetime import datetime
 
 from dotenv import load_dotenv
 
-from icloud_imap import fetch_messages
-from email_parse import parse_email, is_newsletter
-from agent_pipeline import summarize_and_classify, synthesize_digest
-from digest_writer import write_digest
-from link_fetcher import enrich_email_with_links
-
-
-def _env_bool(name: str, default: bool = False) -> bool:
-    val = os.getenv(name)
-    if val is None:
-        return default
-    return val.strip().lower() in {"1", "true", "yes", "y"}
+from .digest_writer import write_digest
+from .pipeline import build_digest_items, format_digest_markdown, ingest_emails
+from .roles import get_role, load_roles
 
 
 def main() -> None:
     load_dotenv()
 
-    search_query = os.getenv("IMAP_SEARCH", "UNSEEN")
-    mark_seen = _env_bool("MARK_SEEN", False)
-    newsletter_only = _env_bool("NEWSLETTER_ONLY", False)
-    max_body_chars = int(os.getenv("MAX_BODY_CHARS", "4000"))
-    fetch_links = _env_bool("FETCH_LINKS", True)
-    max_links = int(os.getenv("MAX_LINKS_TO_FETCH", "10"))
-    interactive_links = _env_bool("INTERACTIVE_LINK_FETCH", True)
+    new_count, skipped, new_content_ids = ingest_emails()
+    print(f"Ingested: {new_count}, Skipped: {skipped}")
 
-    messages = fetch_messages(search_query=search_query, mark_seen=mark_seen)
-    if not messages:
-        print("No messages to process after search.")
+    if not new_content_ids:
+        print("No new items ingested. Skipping digest build.")
         return
 
-    print(f"Processing {len(messages)} message(s)...")
-    items = []
-    skipped = 0
-    for raw in messages:
-        parsed = parse_email(raw, max_body_chars=max_body_chars)
-        if not parsed:
-            skipped += 1
-            continue
-        
-        if newsletter_only and not is_newsletter(parsed):
-            skipped += 1
-            continue
-        
-        # Enrich email with link content if enabled
-        if fetch_links:
-            parsed = enrich_email_with_links(parsed, max_links=max_links, interactive=interactive_links)
+    roles = load_roles()
+    role = get_role("CTO", roles)
+    if not role:
+        raise RuntimeError("Default role 'CTO' is missing from roles.yaml")
 
-        summary, category = summarize_and_classify(parsed)
-        items.append({
-            "subject": parsed["subject"],
-            "from": parsed["from"],
-            "date": parsed["date"],
-            "summary": summary,
-            "category": category,
-        })
-
-    print(f"\nProcessed: {len(items)} items, Skipped: {skipped}")
-    
+    items = build_digest_items(role, content_ids=new_content_ids or None)
     if not items:
         print("No items to digest after filtering.")
         return
 
-    digest_md = synthesize_digest(items)
-    out_path = write_digest(digest_md, date=datetime.utcnow().date())
+    markdown = format_digest_markdown(items, role.name)
+    out_path = write_digest(markdown, date=datetime.utcnow().date())
     print(f"Wrote digest to {out_path}")
 
 
