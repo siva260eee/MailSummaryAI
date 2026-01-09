@@ -6,17 +6,26 @@ from bs4 import BeautifulSoup
 
 def extract_links(text: str) -> List[str]:
     """Extract HTTP/HTTPS URLs from text."""
-    # Regex pattern for URLs
-    url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
-    urls = re.findall(url_pattern, text)
+    # Regex patterns for URLs
+    # Pattern 1: URLs in brackets [http://...]
+    bracket_pattern = r'\[?(https?://[^\s<>"{}|\\^`\[\]]+)\]?'
+    # Pattern 2: Bare URLs
+    bare_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
+    
+    # First try to find URLs in brackets (from our HTML conversion)
+    urls = re.findall(bracket_pattern, text)
+    
+    # If no bracketed URLs, look for bare URLs
+    if not urls:
+        urls = re.findall(bare_pattern, text)
     
     # Remove duplicates while preserving order
     seen = set()
     unique_urls = []
     for url in urls:
-        # Clean up URL (remove trailing punctuation)
-        url = url.rstrip('.,;:!?)')
-        if url not in seen:
+        # Clean up URL (remove trailing punctuation and brackets)
+        url = url.rstrip('.,;:!?)]').lstrip('[')
+        if url not in seen and url.startswith(('http://', 'https://')):
             seen.add(url)
             unique_urls.append(url)
     
@@ -76,10 +85,10 @@ def enrich_email_with_links(parsed: Dict[str, str], max_links: int = 10, max_cha
     
     # Encode subject safely for console output
     safe_subject = subject.encode('ascii', errors='ignore').decode('ascii')
-    print(f"  Checking links in '{safe_subject}' - Body length: {len(body)}")
+    print(f"  Checking links in '{safe_subject}'")
     
     if not links:
-        print(f"  No HTTP links found in this email")
+        print(f"    No HTTP/HTTPS URLs found")
         return parsed
     
     total_links = len(links)
