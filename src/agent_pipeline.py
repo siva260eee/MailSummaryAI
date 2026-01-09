@@ -5,10 +5,13 @@ from openai import OpenAI
 
 
 CATEGORIES = [
+    "DevOps",
+    "Development/Engineering",
+    "AI/ML",
+    "FinTech",
     "Telecom",
     "Device Financing",
-    "AI SaaS",
-    "FinTech",
+    "Business/Marketing",
     "Other",
 ]
 
