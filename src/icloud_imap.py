@@ -24,6 +24,8 @@ def fetch_messages(search_query: str = "UNSEEN", mark_seen: bool = False) -> Lis
             return []
 
         ids = data[0].split()
+        print(f"Found {len(ids)} message(s) matching search criteria: {search_query}")
+        
         if not ids:
             return []
 
@@ -31,20 +33,29 @@ def fetch_messages(search_query: str = "UNSEEN", mark_seen: bool = False) -> Lis
         for msg_id in ids:
             status, msg_data = client.fetch(msg_id, "(RFC822)")
             if status != "OK" or not msg_data:
+                print(f"  Failed to fetch message {msg_id.decode()}: status={status}")
                 continue
-            # msg_data is a list of tuples: [(b'1 (RFC822 {size}', email_bytes), b')']
-            # We need to find the bytes object in the response
+            # msg_data structure varies, could be:
+            # [(b'1 (RFC822 {size}', email_bytes), b')'] or [email_bytes] or [(b'FLAGS...', email_bytes)]
             raw = None
-            for item in msg_data:
-                if isinstance(item, tuple) and len(item) > 1:
-                    if isinstance(item[1], bytes):
-                        raw = item[1]
-                        break
+            if isinstance(msg_data, list) and len(msg_data) > 0:
+                # Check if first item is already bytes (direct email content)
+                if isinstance(msg_data[0], bytes):
+                    raw = msg_data[0]
+                # Check if it's a tuple with email bytes as second element
+                elif isinstance(msg_data[0], tuple) and len(msg_data[0]) >= 2:
+                    if isinstance(msg_data[0][1], bytes):
+                        raw = msg_data[0][1]
+            
             if raw:
                 messages.append(raw)
+            else:
+                print(f"  Could not extract email bytes from message {msg_id.decode()}")
 
             if mark_seen:
                 client.store(msg_id, "+FLAGS", "\\Seen")
+
+        print(f"Successfully fetched {len(messages)} message(s)\n")
 
         return messages
     finally:

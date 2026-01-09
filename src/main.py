@@ -26,15 +26,19 @@ def main() -> None:
 
     messages = fetch_messages(search_query=search_query, mark_seen=mark_seen)
     if not messages:
-        print("No messages matched search.")
+        print("No messages to process after search.")
         return
 
+    print(f"Processing {len(messages)} message(s)...")
     items = []
+    skipped = 0
     for raw in messages:
         parsed = parse_email(raw, max_body_chars=max_body_chars)
         if not parsed:
+            skipped += 1
             continue
         if newsletter_only and not is_newsletter(parsed):
+            skipped += 1
             continue
 
         summary, category = summarize_and_classify(parsed)
@@ -46,6 +50,8 @@ def main() -> None:
             "category": category,
         })
 
+    print(f"\nProcessed: {len(items)} items, Skipped: {skipped}")
+    
     if not items:
         print("No items to digest after filtering.")
         return
