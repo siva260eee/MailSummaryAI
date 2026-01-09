@@ -31,21 +31,22 @@ def fetch_messages(search_query: str = "UNSEEN", mark_seen: bool = False) -> Lis
 
         messages: List[bytes] = []
         for msg_id in ids:
-            status, msg_data = client.fetch(msg_id, "(RFC822)")
+            # Use BODY.PEEK[] instead of RFC822 for better iCloud IMAP compatibility
+            status, msg_data = client.fetch(msg_id, "(BODY.PEEK[])")
             if status != "OK" or not msg_data:
                 print(f"  Failed to fetch message {msg_id.decode()}: status={status}")
                 continue
-            # msg_data structure varies, could be:
-            # [(b'1 (RFC822 {size}', email_bytes), b')'] or [email_bytes] or [(b'FLAGS...', email_bytes)]
+            
+            # IMAP BODY[] fetch returns: [(b'1 (BODY[] {size}', email_bytes), b')']
+            # We need to find the actual email bytes in the tuple
             raw = None
-            if isinstance(msg_data, list) and len(msg_data) > 0:
-                # Check if first item is already bytes (direct email content)
-                if isinstance(msg_data[0], bytes):
-                    raw = msg_data[0]
-                # Check if it's a tuple with email bytes as second element
-                elif isinstance(msg_data[0], tuple) and len(msg_data[0]) >= 2:
-                    if isinstance(msg_data[0][1], bytes):
-                        raw = msg_data[0][1]
+            for item in msg_data:
+                if isinstance(item, tuple):
+                    # Look for the largest bytes object in the tuple (that's the email)
+                    for sub_item in item:
+                        if isinstance(sub_item, bytes) and len(sub_item) > 100:
+                            if raw is None or len(sub_item) > len(raw):
+                                raw = sub_item
             
             if raw:
                 messages.append(raw)

@@ -37,6 +37,7 @@ def main() -> None:
         if not parsed:
             skipped += 1
             continue
+        
         if newsletter_only and not is_newsletter(parsed):
             skipped += 1
             continue
